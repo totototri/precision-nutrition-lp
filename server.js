@@ -1,91 +1,48 @@
-// server.js
+// 先頭付近（既にあればそのまま）
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import Stripe from "stripe";
-import path from "path";
-import { fileURLToPath } from "url";
-
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
-app.use(cors());
+
+// ← ここ重要：フロントの公開URLを固定（サブパス含む）
+const ORIGIN = process.env.FRONTEND_URL || "https://totototri.github.io/precision-nutrition-lp";
+
+app.use(cors({ origin: ORIGIN }));
 app.use(express.json());
 
-// ★ 秘密鍵（.env に入れる）
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-06-20",
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" });
 
-// 金額バリデーション（JPY, 1,000〜2,000,000円の範囲で任意に）
-function validateAmount(amount) {
-  return Number.isInteger(amount) && amount >= 1000 && amount <= 2000000;
-}
+const okAmount = (a) => Number.isInteger(a) && a >= 1000 && a <= 2_000_000;
 
-// 単発決済（Checkout）
 app.post("/create-checkout-session", async (req, res) => {
   try {
     const { amount, description } = req.body;
-    if (!validateAmount(amount)) {
-      return res.status(400).json({ error: "Invalid amount" });
-    }
+    if (!okAmount(amount)) return res.status(400).json({ error: "Invalid amount" });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
       locale: "ja",
-      line_items: [
-        {
-          price_data: {
-            currency: "jpy",
-            product_data: { name: description || "サービス料金" },
-            unit_amount: amount,
-          },
-          quantity: 1,
+      line_items: [{
+        price_data: {
+          currency: "jpy",
+          product_data: { name: description || "サービス料金" },
+          unit_amount: amount, // 例: 300000 = ¥300,000
         },
-      ],
-      success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.origin}/cancel.html`,
-      // 領収書メールはダッシュボード設定に依存
-      allow_promotion_codes: false,
-      // automatic_tax: { enabled: true },
-      // billing_address_collection: "required",
+        quantity: 1,
+      }],
+      success_url: `${ORIGIN}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${ORIGIN}/cancel.html`,
     });
 
     res.json({ url: session.url });
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Server error" });
+    // ✅ 何で落ちたか見えるようにする
+    console.error("Stripe error:", e?.raw?.message || e.message, e?.raw || "");
+    res.status(500).json({ error: e?.raw?.message || e.message || "Server error" });
   }
-});
-
-// （任意）サブスク用のルート（Price ID で管理）
-app.post("/create-subscription-session", async (req, res) => {
-  try {
-    const { priceId, description } = req.body;
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      payment_method_types: ["card"],
-      locale: "ja",
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${req.headers.origin}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.origin}/cancel.html`,
-      subscription_data: {
-        description: description || "月額コーチング",
-      },
-    });
-    res.json({ url: session.url });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-const PORT = process.env.PORT || 4242;
-app.listen(PORT, () => {
-  console.log(`Server running: http://localhost:${PORT}`);
 });
 
