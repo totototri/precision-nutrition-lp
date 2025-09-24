@@ -1,4 +1,8 @@
+// 先頭に追加
+const API_URL = import.meta.env.VITE_API_URL; // 例: https://precision-nutrition-api.onrender.com
+
 import React, { useState } from "react";
+
 
 // ✅ シングルファイルReactコンポーネント
 // Tailwindでデザイン。Checkout連携は前ターンで作った Node/Stripe の /create-checkout-session を想定（任意）。
