@@ -7,9 +7,10 @@ dotenv.config();
 const app = express();
 
 // 公開LPのURL（サブパス必須）
-const ORIGIN = process.env.FRONTEND_URL || "https://totototri.github.io/precision-nutrition-lp";
-app.use(cors({ origin: ORIGIN }));
-app.use(express.json());
+const PUBLIC_URL = process.env.FRONTEND_URL || "https://totototri.github.io/precision-nutrition-lp";
+// CORSは「スキーム+ホスト(+ポート)」だけで比較されるので、サブパスを外す
+const CORS_ORIGIN = new URL(PUBLIC_URL).origin; // => https://totototri.github.io
+app.use(cors({ origin: CORS_ORIGIN }));
 
 // ← ここで“終了しない”ように変更
 const stripeKey = process.env.STRIPE_SECRET_KEY || "";
