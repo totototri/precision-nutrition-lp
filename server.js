@@ -1,3 +1,4 @@
+// server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -6,50 +7,66 @@ dotenv.config();
 
 const app = express();
 
-// 公開LPのURL（サブパス必須）
-const PUBLIC_URL = process.env.FRONTEND_URL || "https://totototri.github.io/precision-nutrition-lp";
-// CORSは「スキーム+ホスト(+ポート)」だけで比較されるので、サブパスを外す
+/* ---------- 公開URLとCORS ---------- */
+// GitHub Pages の公開URL（サブパス必須）
+const PUBLIC_URL =
+  process.env.FRONTEND_URL || "https://totototri.github.io/precision-nutrition-lp";
+// CORS は「スキーム+ホスト(+ポート)」のみで比較する
 const CORS_ORIGIN = new URL(PUBLIC_URL).origin; // => https://totototri.github.io
 app.use(cors({ origin: CORS_ORIGIN }));
 
-// ← ここで“終了しない”ように変更
+/* ---------- JSON/body パーサ（最優先） ---------- */
+app.use(express.json({ type: ["application/json", "application/*+json"] }));
+app.use(express.urlencoded({ extended: false }));
+
+/* ---------- Stripe 初期化 ---------- */
 const stripeKey = process.env.STRIPE_SECRET_KEY || "";
 if (!/^sk_(test|live)_/.test(stripeKey)) {
-  console.warn("⚠️ STRIPE_SECRET_KEY が未設定または不正です:", stripeKey ? stripeKey.slice(0, 8) + "…" : "MISSING");
+  console.warn(
+    "⚠️ STRIPE_SECRET_KEY が未設定または不正です:",
+    stripeKey ? stripeKey.slice(0, 8) + "…" : "MISSING"
+  );
 }
 const stripe = new Stripe(stripeKey || "sk_test_dummy", { apiVersion: "2024-06-20" });
 
-// 確認用エンドポイント
-app.get("/healthz", (_req, res) => res.json({ ok: true, origin: ORIGIN }));
-app.get("/__status", (_req, res) => {
-  res.json({
-    origin: ORIGIN,
-    stripeKey: stripeKey ? stripeKey.slice(0, 10) + "…" : "MISSING",
-  });
-});
+/* ---------- ヘルスチェック ---------- */
+app.get("/", (_req, res) => res.send("Precision Nutrition API is running"));
+app.get("/healthz", (_req, res) => res.json({ ok: true, origin: CORS_ORIGIN, publicUrl: PUBLIC_URL }));
+app.get("/__status", (_req, res) =>
+  res.json({ origin: CORS_ORIGIN, publicUrl: PUBLIC_URL, stripeKey: stripeKey ? stripeKey.slice(0, 10) + "…" : "MISSING" })
+);
 
+/* ---------- 決済API ---------- */
 const okAmount = (a) => Number.isInteger(a) && a >= 1000 && a <= 2_000_000;
 
 app.post("/create-checkout-session", async (req, res) => {
   try {
-    const { amount, description } = req.body;
-    if (!okAmount(amount)) return res.status(400).json({ error: "Invalid amount" });
+    // 直接の分割代入はやめて、未定義でも安全に読む
+    const body = req.body ?? {};
+    const amount = Number(body.amount);
+    const description = body.description || "サービス料金";
+
+    if (!Number.isFinite(amount)) return res.status(400).json({ error: "No/invalid amount in body" });
+    if (!okAmount(amount)) return res.status(400).json({ error: "Invalid amount range" });
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
       locale: "ja",
-      line_items: [{
-        price_data: {
-          currency: "jpy",
-          product_data: { name: description || "サービス料金" },
-          unit_amount: amount,
+      line_items: [
+        {
+          price_data: {
+            currency: "jpy",
+            product_data: { name: description },
+            unit_amount: Math.trunc(amount),
+          },
+          quantity: 1,
         },
-        quantity: 1,
-      }],
-      success_url: `${ORIGIN}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${ORIGIN}/cancel.html`,
+      ],
+      success_url: `${PUBLIC_URL}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${PUBLIC_URL}/cancel.html`,
     });
+
     res.json({ url: session.url });
   } catch (e) {
     console.error("Stripe error:", e?.raw?.message || e.message);
@@ -57,7 +74,7 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
+/* ---------- 起動 ---------- */
 const PORT = process.env.PORT || 4242;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, "0.0.0.0", () => console.log(`Server running on port ${PORT}`));
+
