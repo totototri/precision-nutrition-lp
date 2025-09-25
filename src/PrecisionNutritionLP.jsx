@@ -1,13 +1,10 @@
-// 先頭に追加
+// APIのURL（GitHub PagesのActions Variablesで VITE_API_URL を設定）
 const API_URL = import.meta.env.VITE_API_URL; // 例: https://precision-nutrition-api.onrender.com
 
 import React, { useState } from "react";
 
-
 // ✅ シングルファイルReactコンポーネント
-// Tailwindでデザイン。Checkout連携は前ターンで作った Node/Stripe の /create-checkout-session を想定（任意）。
-// そのまま静的LPとしても使用可能（申し込みはメールリンク/フォーム送信）。
-
+// Tailwindでデザイン。Checkoutは Render 上の /create-checkout-session を叩く。
 export default function PrecisionNutritionLP() {
   const [plan, setPlan] = useState({ amount: 50000, label: "月額5万円プラン" });
 
@@ -52,20 +49,28 @@ export default function PrecisionNutritionLP() {
 
   const handleCheckout = async (amount, description) => {
     try {
-      // 🔧 Node/Express + Stripe を立てている場合（前ターンの server.js）
-      const res = await fetch("/create-checkout-session", {
+      const res = await fetch(`${API_URL}/create-checkout-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount, description }),
       });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`API ${res.status}: ${text}`);
+      }
       const data = await res.json();
-      if (data.url) window.location.href = data.url;
-      else alert("決済リンクの生成に失敗しました。サーバ設定をご確認ください。");
+      if (data.url) {
+        window.location.href = data.url; // ✅ Stripeへ遷移
+      } else {
+        throw new Error("No checkout url in response");
+      }
     } catch (e) {
-      // サーバが無い場合はメール問い合わせにフォールバック
-      window.location.href = `mailto:hello@example.com?subject=${encodeURIComponent(
-        "精密栄養学コーチング 申し込み"
-      )}&body=${encodeURIComponent(`ご希望プラン: ${description} / 金額: ${amount}円`)} `;
+      console.error("Checkout error:", e);
+      alert("決済に失敗しました。設定（VITE_API_URL / サーバ / CORS）を確認してください。");
+      // 以前のメールフォールバックは無効化：
+      // window.location.href = `mailto:hello@example.com?subject=${encodeURIComponent(
+      //   "精密栄養学コーチング 申し込み"
+      // )}&body=${encodeURIComponent(`ご希望プラン: ${description} / 金額: ${amount}円`)}`;
     }
   };
 
@@ -256,6 +261,7 @@ export default function PrecisionNutritionLP() {
               const name = data.get("name");
               const mail = data.get("email");
               const msg = data.get("message");
+              // ここは問い合わせ用途なので mailto を維持
               window.location.href = `mailto:hello@example.com?subject=${encodeURIComponent(
                 "無料相談の予約"
               )}&body=${encodeURIComponent(`お名前: ${name}\nメール: ${mail}\nメッセージ: ${msg}`)}`;
@@ -284,3 +290,4 @@ export default function PrecisionNutritionLP() {
     </div>
   );
 }
+
