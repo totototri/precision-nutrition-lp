@@ -1,8 +1,6 @@
+// src/PrecisionNutritionLP.jsx
 // APIのURL（GitHub PagesのActions Variablesで VITE_API_URL を設定）
 const API_URL = import.meta.env.VITE_API_URL; // 例: https://precision-nutrition-api.onrender.com
-- <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-slate-900">
-+ <div id="top" className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-slate-900">
-
 
 import React, { useState } from "react";
 
@@ -12,42 +10,15 @@ export default function PrecisionNutritionLP() {
   const [plan, setPlan] = useState({ amount: 50000, label: "月額5万円プラン" });
 
   const plans = [
-    {
-      title: "Starter",
-      label: "月額5万円プラン",
-      amount: 50000,
-      features: [
-        "初回コンサル60分（オンライン）",
-        "食事評価＆改善方針シート",
-        "LINE/Chatで週1回のフォロー",
-        "推奨サプリの基本設計",
-      ],
-      badge: "入門",
-    },
-    {
-      title: "Pro",
-      label: "月額10万円プラン",
-      amount: 100000,
-      features: [
-        "初回コンサル90分＋月2回45分",
-        "血液データ読解＆栄養戦略",
-        "LINE/Chatで週2回のフォロー",
-        "食習慣の行動デザイン（睡眠/ストレス含む）",
-      ],
-      badge: "おすすめ",
-    },
-    {
-      title: "Elite",
-      label: "月額30万円プラン",
-      amount: 300000,
-      features: [
-        "初回コンサル120分＋毎週60分",
-        "遺伝子/血液/グルコース連携の精密プラン",
-        "個別レシピ＆買い物同行（オンライン/条件付）",
-        "専門医・検査機関との連携コーディネート",
-      ],
-      badge: "フルサポート",
-    },
+    { title: "Starter", label: "月額5万円プラン", amount: 50000, features: [
+      "初回コンサル60分（オンライン）","食事評価＆改善方針シート","LINE/Chatで週1回のフォロー","推奨サプリの基本設計",
+    ], badge: "入門" },
+    { title: "Pro", label: "月額10万円プラン", amount: 100000, features: [
+      "初回コンサル90分＋月2回45分","血液データ読解＆栄養戦略","LINE/Chatで週2回のフォロー","食習慣の行動デザイン（睡眠/ストレス含む）",
+    ], badge: "おすすめ" },
+    { title: "Elite", label: "月額30万円プラン", amount: 300000, features: [
+      "初回コンサル120分＋毎週60分","遺伝子/血液/グルコース連携の精密プラン","個別レシピ＆買い物同行（オンライン/条件付）","専門医・検査機関との連携コーディネート",
+    ], badge: "フルサポート" },
   ];
 
   const handleCheckout = async (amount, description) => {
@@ -62,23 +33,17 @@ export default function PrecisionNutritionLP() {
         throw new Error(`API ${res.status}: ${text}`);
       }
       const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url; // ✅ Stripeへ遷移
-      } else {
-        throw new Error("No checkout url in response");
-      }
+      if (data.url) window.location.href = data.url;
+      else throw new Error("No checkout url in response");
     } catch (e) {
       console.error("Checkout error:", e);
       alert("決済に失敗しました。設定（VITE_API_URL / サーバ / CORS）を確認してください。");
-      // 以前のメールフォールバックは無効化：
-      // window.location.href = `mailto:hello@example.com?subject=${encodeURIComponent(
-      //   "精密栄養学コーチング 申し込み"
-      // )}&body=${encodeURIComponent(`ご希望プラン: ${description} / 金額: ${amount}円`)}`;
+      // 旧メールフォールバックは無効化
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-slate-900">
+    <div id="top" className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-slate-900">
       <header className="sticky top-0 z-40 bg-white/70 backdrop-blur border-b border-slate-200">
         <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -159,18 +124,9 @@ export default function PrecisionNutritionLP() {
         <h2 className="text-2xl md:text-3xl font-bold">なぜ“精密”なのか</h2>
         <div className="mt-6 grid md:grid-cols-3 gap-6">
           {[
-            {
-              title: "医学的指標に基づく意思決定",
-              body: "感覚ではなく数値に基づき、介入→結果→再設計のサイクルを最適化。",
-            },
-            {
-              title: "食のプロによる実装力",
-              body: "栄養理論を現実の台所に落とし込む。買い物/下ごしらえ/外食選びまで具体化。",
-            },
-            {
-              title: "継続しやすい設計",
-              body: "生活リズム/嗜好/予算に合わせ、無理なく続くミールプランを共同設計。",
-            },
+            { title: "医学的指標に基づく意思決定", body: "感覚ではなく数値に基づき、介入→結果→再設計のサイクルを最適化。" },
+            { title: "食のプロによる実装力", body: "栄養理論を現実の台所に落とし込む。買い物/下ごしらえ/外食選びまで具体化。" },
+            { title: "継続しやすい設計", body: "生活リズム/嗜好/予算に合わせ、無理なく続くミールプランを共同設計。" },
           ].map((f) => (
             <div key={f.title} className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
               <h3 className="font-semibold">{f.title}</h3>
@@ -226,22 +182,11 @@ export default function PrecisionNutritionLP() {
         <h2 className="text-2xl md:text-3xl font-bold">よくある質問</h2>
         <div className="mt-6 grid md:grid-cols-2 gap-6">
           {[
-            {
-              q: "医療行為との違いは？",
-              a: "本サービスは医療・診断・治療を提供するものではありません。栄養/生活習慣のコーチングと情報提供を行います。必要に応じて医療機関をご案内します。",
-            },
-            {
-              q: "検査は必須？",
-              a: "血液データがあると精度が上がりますが、無しでも開始できます。遺伝子検査は任意です。",
-            },
-            {
-              q: "食事は作ってくれる？",
-              a: "基本はコーチングですが、上位プランでレシピ/買い物同行/外食選定の具体支援を行います（条件あり/オンライン中心）。",
-            },
-            {
-              q: "海外からも参加可能？",
-              a: "オンライン完結のため可能です。タイムゾーンに合わせて日程調整します。",
-            },
+            { q: "医療行為との違いは？",
+              a: "本サービスは医療・診断・治療を提供するものではありません。栄養/生活習慣のコーチングと情報提供を行います。必要に応じて医療機関をご案内します。" },
+            { q: "検査は必須？", a: "血液データがあると精度が上がりますが、無しでも開始できます。遺伝子検査は任意です。" },
+            { q: "食事は作ってくれる？", a: "基本はコーチングですが、上位プランでレシピ/買い物同行/外食選定の具体支援を行います（条件あり/オンライン中心）。" },
+            { q: "海外からも参加可能？", a: "オンライン完結のため可能です。タイムゾーンに合わせて日程調整します。" },
           ].map((f) => (
             <div key={f.q} className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
               <h3 className="font-semibold">{f.q}</h3>
@@ -264,7 +209,6 @@ export default function PrecisionNutritionLP() {
               const name = data.get("name");
               const mail = data.get("email");
               const msg = data.get("message");
-              // ここは問い合わせ用途なので mailto を維持
               window.location.href = `mailto:hello@example.com?subject=${encodeURIComponent(
                 "無料相談の予約"
               )}&body=${encodeURIComponent(`お名前: ${name}\nメール: ${mail}\nメッセージ: ${msg}`)}`;
@@ -285,6 +229,7 @@ export default function PrecisionNutritionLP() {
         <div className="mx-auto max-w-7xl px-4 py-8 text-sm text-slate-500 flex items-center justify-between">
           <p>© {new Date().getFullYear()} Precision Nutrition Coaching</p>
           <div className="flex items-center gap-4">
+            <a href="#top" className="hover:text-slate-800">トップに戻る</a>
             <a href="#" className="hover:text-slate-800">利用規約</a>
             <a href="#" className="hover:text-slate-800">プライバシー</a>
           </div>
