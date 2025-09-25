@@ -1,5 +1,8 @@
 // APIのURL（GitHub PagesのActions Variablesで VITE_API_URL を設定）
 const API_URL = import.meta.env.VITE_API_URL; // 例: https://precision-nutrition-api.onrender.com
+- <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-slate-900">
++ <div id="top" className="min-h-screen bg-gradient-to-b from-white to-slate-50 text-slate-900">
+
 
 import React, { useState } from "react";
 
