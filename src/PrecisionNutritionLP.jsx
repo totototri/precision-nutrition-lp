@@ -7,12 +7,21 @@ import React, { useState } from "react";
 // ✅ シングルファイルReactコンポーネント
 // Tailwindでデザイン。Checkoutは Render 上の /create-checkout-session を叩く。
 export default function PrecisionNutritionLP() {
-  const [plan, setPlan] = useState({ amount: 50000, label: "月額5万円プラン" });
+const [plan, setPlan] = useState({ amount: 1000, label: "お試し1,000円プラン" });
 
   const plans = [
-    { title: "Starter", label: "月額5万円プラン", amount: 50000, features: [
-      "初回コンサル60分（オンライン）","食事評価＆改善方針シート","LINE/Chatで週1回のフォロー","推奨サプリの基本設計",
-    ], badge: "入門" },
+  {
+    title: "Trial",
+    label: "お試し1,000円プラン",
+    amount: 1000,
+    features: [
+      "Stripe本番動作の検証用（1回限り推奨）",
+      "オンライン決済フローの確認",
+      "領収書メール/明細表記の確認",
+    ],
+    badge: "テスト",
+  },
+
     { title: "Pro", label: "月額10万円プラン", amount: 100000, features: [
       "初回コンサル90分＋月2回45分","血液データ読解＆栄養戦略","LINE/Chatで週2回のフォロー","食習慣の行動デザイン（睡眠/ストレス含む）",
     ], badge: "おすすめ" },
